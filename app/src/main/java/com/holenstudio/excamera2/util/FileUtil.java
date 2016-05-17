@@ -100,7 +100,11 @@ public class FileUtil {
     public static String savePhoto(byte[] data, String fileName) {
     	return saveFile(data, photoDir(), fileName);
     }
-    
+
+    public static String saveFile(byte[] data, File file) {
+        return saveFile(data, file.getParentFile(), file.getName());
+    }
+
     public static String saveFile(byte[] data, File path, String fileName) {
     	File file = new File(path, fileName);
     	try {

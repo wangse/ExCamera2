@@ -28,6 +28,7 @@ import android.hardware.camera2.*;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -68,6 +69,8 @@ public class MainActivity extends Activity {
     private CameraCaptureSession mCaptureSession;
     private CameraDevice mCameraDevice;
     private Size mPreviewSize;
+    private Size mVideoSize;
+    private MediaRecorder mMediaRecorder;
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
     private ImageReader mImageReader;
@@ -76,10 +79,11 @@ public class MainActivity extends Activity {
     private CaptureRequest mPreviewRequest;
     private int mState = CameraUtil.STATE_PREVIEW;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+    private boolean mIsRecordingVideo = false;
+    private boolean mIsTakingPicture = true;
 
     /**
-     * {@link TextureView.SurfaceTextureListener} handles several lifecycle
-     * events on a {@link TextureView}.
+     * mPreview(预览窗口)的listener
      */
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
 
@@ -105,15 +109,13 @@ public class MainActivity extends Activity {
     };
 
     /**
-     * {@link CameraDevice.StateCallback} is called when {@link CameraDevice}
-     * changes its state.
+     * 当CameraDevice的状态state发生改变时回调
      */
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
         @Override
         public void onOpened(CameraDevice cameraDevice) {
-            // This method is called when the camera is opened. We start camera
-            // preview here.
+            //打开摄像头设备CameraDevice并启动摄像头预览mPreview
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
             createCameraPreviewSession();
@@ -222,9 +224,37 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.btn_capture:
-                    takePicture();
+                    if (mIsTakingPicture) {
+                        takePicture();
+                    } else {
+                        if (mIsRecordingVideo) {
+                            stopRecordingVideo();
+                            mCaptureBtn.setBackgroundResource(R.drawable.btn_recorder_background);
+                        } else {
+                            if (mMediaRecorder == null) {
+                                mMediaRecorder = new MediaRecorder();
+                            }
+//                            if (CameraUtil.prepareVideoRecorder(MainActivity.this, mMediaRecorder, mVideoSize)) {
+                            if (setUpMediaRecorder()) {
+                                startRecordingVideo();
+                                mCaptureBtn.setBackgroundResource(R.drawable.btn_recorder_stop_background);
+                            } else {
+                                mMediaRecorder.release();
+                            }
+                        }
+                    }
                     break;
-
+                case R.id.btn_switch_mode:
+                    if (mIsTakingPicture) {
+                        mIsTakingPicture = false;
+                        mSwichModeBtn.setBackgroundResource(R.drawable.btn_switch_to_camera);
+                        mCaptureBtn.setBackgroundResource(R.drawable.btn_recorder_background);
+                    } else {
+                        mIsTakingPicture = true;
+                        mSwichModeBtn.setBackgroundResource(R.drawable.btn_switch_to_video);
+                        mCaptureBtn.setBackgroundResource(R.drawable.btn_shutter_background);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -271,17 +301,13 @@ public class MainActivity extends Activity {
      * respective requested values, and whose aspect ratio matches with the
      * specified value.
      *
-     * @param choices
-     *            The list of sizes that the camera supports for the intended
-     *            output class
-     * @param width
-     *            The minimum desired width
-     * @param height
-     *            The minimum desired height
-     * @param aspectRatio
-     *            The aspect ratio
+     * @param choices     The list of sizes that the camera supports for the intended
+     *                    output class
+     * @param width       The minimum desired width
+     * @param height      The minimum desired height
+     * @param aspectRatio The aspect ratio
      * @return The optimal {@code Size}, or an arbitrary one if none were big
-     *         enough
+     * enough
      */
     private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the
@@ -380,6 +406,7 @@ public class MainActivity extends Activity {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
+
             manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -418,6 +445,7 @@ public class MainActivity extends Activity {
                 // garbage capture data.
                 mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                         width, height, largest);
+                mVideoSize = chooseVideoSize(map.getOutputSizes(MediaRecorder.class));
 
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
@@ -428,7 +456,7 @@ public class MainActivity extends Activity {
                     mPreview.setAspectRatio(
                             mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 }
-
+                mMediaRecorder = new MediaRecorder();
                 mCameraId = cameraId;
                 return;
             }
@@ -489,6 +517,7 @@ public class MainActivity extends Activity {
      */
     private void createCameraPreviewSession() {
         try {
+//            setUpMediaRecorder();
             SurfaceTexture texture = mPreview.getSurfaceTexture();
             assert texture != null;
 
@@ -682,6 +711,69 @@ public class MainActivity extends Activity {
     }
 
     /**
+     * In this sample, we choose a video size with 3x4 aspect ratio. Also, we don't use sizes larger
+     * than 1080p, since MediaRecorder cannot handle such a high-resolution video.
+     *
+     * @param choices The list of available sizes
+     * @return The video size
+     */
+    private static Size chooseVideoSize(Size[] choices) {
+        for (Size size : choices) {
+            if (size.getWidth() == size.getHeight() * 4 / 3 && size.getWidth() <= 1080) {
+                return size;
+            }
+        }
+        Log.e(TAG, "Couldn't find any suitable video size");
+        return choices[choices.length - 1];
+    }
+
+    private boolean setUpMediaRecorder() {
+        if (null == MainActivity.this) {
+            return false;
+        }
+        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setOutputFile(FileUtil.videoDir().getAbsolutePath());
+        mMediaRecorder.setVideoEncodingBitRate(10000000);
+        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        int orientation = CameraUtil.ORIENTATIONS.get(rotation);
+        mMediaRecorder.setOrientationHint(orientation);
+        try {
+            mMediaRecorder.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    private void startRecordingVideo() {
+        try {
+            // UI
+            mIsRecordingVideo = true;
+
+            // Start recording
+            mMediaRecorder.start();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopRecordingVideo() {
+        // UI
+        mIsRecordingVideo = false;
+        // Stop recording
+        mMediaRecorder.stop();
+        mMediaRecorder.reset();
+        createCameraPreviewSession();
+    }
+
+    /**
      * Saves a JPEG {@link Image} into the specified {@link File}.
      */
     private static class ImageSaver implements Runnable {
@@ -705,22 +797,8 @@ public class MainActivity extends Activity {
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
-            FileOutputStream output = null;
-            try {
-                output = new FileOutputStream(mFile);
-                output.write(bytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                mImage.close();
-                if (null != output) {
-                    try {
-                        output.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            FileUtil.saveFile(bytes, mFile);
+            mImage.close();
         }
 
     }
