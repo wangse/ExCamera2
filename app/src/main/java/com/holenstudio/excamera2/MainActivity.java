@@ -544,7 +544,7 @@ public class MainActivity extends Activity {
 //            mPreviewRequestBuilder.addTarget(imageReaderSurfac);
 
             // Here, we create a CameraCaptureSession for camera preview.
-//            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+//            Arrays.asList(surface, mImageReader.getSurface())
             mCameraDevice.createCaptureSession(surfaces,
                     new CameraCaptureSession.StateCallback() {
 
