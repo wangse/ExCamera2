@@ -26,6 +26,7 @@ import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.*;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
@@ -235,12 +236,12 @@ public class MainActivity extends Activity {
                                 mMediaRecorder = new MediaRecorder();
                             }
 //                            if (CameraUtil.prepareVideoRecorder(MainActivity.this, mMediaRecorder, mVideoSize)) {
-                            if (setUpMediaRecorder()) {
+//                            if (setUpMediaRecorder()) {
                                 startRecordingVideo();
                                 mCaptureBtn.setBackgroundResource(R.drawable.btn_recorder_stop_background);
-                            } else {
-                                mMediaRecorder.release();
-                            }
+//                            } else {
+//                                mMediaRecorder.release();
+//                            }
                         }
                     }
                     break;
@@ -517,23 +518,34 @@ public class MainActivity extends Activity {
      */
     private void createCameraPreviewSession() {
         try {
-//            setUpMediaRecorder();
+            setUpMediaRecorder();
             SurfaceTexture texture = mPreview.getSurfaceTexture();
             assert texture != null;
 
             // We configure the size of default buffer to be the size of camera preview we want.
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
 
+            List<Surface> surfaces = new ArrayList<Surface>();
             // This is the output Surface we need to start preview.
-            Surface surface = new Surface(texture);
+            Surface previewSurface = new Surface(texture);
+            surfaces.add(previewSurface);
 
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            mPreviewRequestBuilder.addTarget(surface);
+            mPreviewRequestBuilder.addTarget(previewSurface);
+
+            Surface recorderSurface = mMediaRecorder.getSurface();
+            surfaces.add(recorderSurface);
+            mPreviewRequestBuilder.addTarget(recorderSurface);
+
+            Surface imageReaderSurfac = mImageReader.getSurface();
+            surfaces.add(imageReaderSurfac);
+//            mPreviewRequestBuilder.addTarget(imageReaderSurfac);
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+//            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            mCameraDevice.createCaptureSession(surfaces,
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -546,6 +558,7 @@ public class MainActivity extends Activity {
                             // When the session is ready, we start displaying the preview.
                             mCaptureSession = cameraCaptureSession;
                             try {
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
                                 // Auto focus should be continuous for camera preview.
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
@@ -566,7 +579,7 @@ public class MainActivity extends Activity {
                         public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
                             Toast.makeText(MainActivity.this, "Failed", Toast.LENGTH_SHORT).show();
                         }
-                    }, null
+                    }, mBackgroundHandler
             );
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -728,13 +741,11 @@ public class MainActivity extends Activity {
     }
 
     private boolean setUpMediaRecorder() {
-        if (null == MainActivity.this) {
-            return false;
-        }
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+//        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_720P));
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mMediaRecorder.setOutputFile(FileUtil.videoDir().getAbsolutePath());
+        mMediaRecorder.setOutputFile(FileUtil.videoDir().getAbsolutePath() + "/" +  System.currentTimeMillis() + ".mp4");
         mMediaRecorder.setVideoEncodingBitRate(10000000);
         mMediaRecorder.setVideoFrameRate(30);
         mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
