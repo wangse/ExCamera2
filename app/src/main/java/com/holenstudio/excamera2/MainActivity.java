@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -30,6 +31,7 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -55,6 +57,8 @@ import com.holenstudio.excamera2.view.FrontView;
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
+    private final int REQUEST_CODE_CAMERA_PERMISSION = 0x01;
+
 
     private Button mCaptureBtn;
     private Button mSwichModeBtn;
@@ -401,13 +405,7 @@ public class MainActivity extends Activity {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
+                requestCameraPermission();
                 return;
             }
 
@@ -417,6 +415,37 @@ public class MainActivity extends Activity {
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera opening.", e);
         }
+    }
+
+    /**
+     * Parmission handling for Android 6.0
+     */
+    @TargetApi(Build.VERSION_CODES.M)
+    private void requestCameraPermission() {
+        if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+            new AlertDialog.Builder(this)
+                    .setMessage("Request Permission")
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            requestPermissions(new String[]{Manifest.permission.CAMERA},
+                                    REQUEST_CODE_CAMERA_PERMISSION);
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel,
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                    .create();
+            return;
+        }
+        //request permission
+        requestPermissions(new String[]{Manifest.permission.CAMERA},
+                REQUEST_CODE_CAMERA_PERMISSION);
+        return;
     }
 
     private void setUpCameraOutputs(int width, int height) {
