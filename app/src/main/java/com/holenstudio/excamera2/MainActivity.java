@@ -35,6 +35,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -139,9 +140,7 @@ public class MainActivity extends Activity {
             mCameraOpenCloseLock.release();
             cameraDevice.close();
             mCameraDevice = null;
-            if (null != this) {
-                finish();
-            }
+            Log.d(TAG, "This occurs error:" + error);
         }
 
     };
@@ -320,7 +319,7 @@ public class MainActivity extends Activity {
     private static Size chooseOptimalSize(Size[] choices, int width, int height, Size aspectRatio) {
         // Collect the supported resolutions that are at least as big as the
         // preview Surface
-        List<Size> bigEnough = new ArrayList<Size>();
+        List<Size> bigEnough = new ArrayList<>();
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
         for (Size option : choices) {
@@ -702,7 +701,7 @@ public class MainActivity extends Activity {
      * @param viewHeight The height of `mTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
-        if (null == mPreview || null == mPreviewSize || null == this) {
+        if (null == mPreview || null == mPreviewSize) {
             return;
         }
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
@@ -773,7 +772,7 @@ public class MainActivity extends Activity {
      */
     private void captureStillPicture() {
         try {
-            if (null == this || null == mCameraDevice) {
+            if (null == mCameraDevice) {
                 return;
             }
             // This is the CaptureRequest.Builder that we use to take a picture.
