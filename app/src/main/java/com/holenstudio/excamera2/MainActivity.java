@@ -85,6 +85,7 @@ public class MainActivity extends Activity {
     private CaptureRequest.Builder mPreviewRequestBuilder;
     private CaptureRequest mPreviewRequest;
     private int mState = CameraUtil.STATE_PREVIEW;
+    private List<Surface> mSurfaces;
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private boolean mIsRecordingVideo = false;
     private boolean mIsTakingPicture = true;
@@ -125,7 +126,7 @@ public class MainActivity extends Activity {
             //打开摄像头设备CameraDevice并启动摄像头预览mPreview
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
-            createCameraPreviewSession();
+            createCameraPreviewSession(true, true);
         }
 
         @Override
@@ -251,12 +252,12 @@ public class MainActivity extends Activity {
                     break;
                 case R.id.btn_switch_mode:
                     if (mIsTakingPicture) {
-                        createCameraPreviewSession(false);
+                        createCameraPreviewSession(false, false);
                         mIsTakingPicture = false;
                         mSwichModeBtn.setBackgroundResource(R.drawable.btn_switch_to_camera);
                         mCaptureBtn.setBackgroundResource(R.drawable.btn_recorder_background);
                     } else {
-                        createCameraPreviewSession(true);
+                        createCameraPreviewSession(true, false);
                         mIsTakingPicture = true;
                         mSwichModeBtn.setBackgroundResource(R.drawable.btn_switch_to_video);
                         mCaptureBtn.setBackgroundResource(R.drawable.btn_shutter_background);
@@ -368,6 +369,7 @@ public class MainActivity extends Activity {
     }
 
     private void initData() {
+        mSurfaces = new ArrayList<>();
         mPictureFile = new File(FileUtil.photoDir().getAbsolutePath() + "/" + System.currentTimeMillis() + ".jpg");
     }
 
@@ -620,7 +622,7 @@ public class MainActivity extends Activity {
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
      */
-    private void createCameraPreviewSession(boolean isTakingPicture) {
+    private void createCameraPreviewSession(boolean isTakingPicture, final boolean isFirstPreview) {
         try {
             SurfaceTexture texture = mPreview.getSurfaceTexture();
             assert texture != null;
@@ -628,10 +630,14 @@ public class MainActivity extends Activity {
             // We configure the size of default buffer to be the size of camera preview we want.
             texture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
 
-            List<Surface> surfaces = new ArrayList<Surface>();
+            if (null == mSurfaces) {
+                mSurfaces = new ArrayList<>();
+            }
             // This is the output Surface we need to start preview.
             Surface previewSurface = new Surface(texture);
-            surfaces.add(previewSurface);
+            if (!mSurfaces.contains(previewSurface)) {
+                mSurfaces.add(previewSurface);
+            }
 
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
@@ -639,19 +645,23 @@ public class MainActivity extends Activity {
             mPreviewRequestBuilder.addTarget(previewSurface);
 
             if (isTakingPicture) {
-                Surface imageReaderSurfac = mImageReader.getSurface();
-                surfaces.add(imageReaderSurfac);
-                mPreviewRequestBuilder.addTarget(imageReaderSurfac);
+//                Surface imageReaderSurfac = mImageReader.getSurface();
+//                if (!mSurfaces.contains(imageReaderSurfac)) {
+//                    mSurfaces.add(imageReaderSurfac);
+//                }
+//                mPreviewRequestBuilder.addTarget(imageReaderSurfac);
             } else {
 //                setUpMediaRecorder();
                 Surface recorderSurface = mMediaRecorder.getSurface();
-                surfaces.add(recorderSurface);
+                if(!mSurfaces.contains(recorderSurface)) {
+                    mSurfaces.add(recorderSurface);
+                }
                 mPreviewRequestBuilder.addTarget(recorderSurface);
             }
 
             // Here, we create a CameraCaptureSession for camera preview.
 //            Arrays.asList(surface, mImageReader.getSurface())
-            mCameraDevice.createCaptureSession(surfaces,
+            mCameraDevice.createCaptureSession(mSurfaces,
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -674,8 +684,14 @@ public class MainActivity extends Activity {
 
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
-                                mCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        mCaptureCallback, mBackgroundHandler);
+                                if (isFirstPreview) {
+                                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                                            null, mBackgroundHandler);
+                                } else {
+                                    mCaptureSession.setRepeatingRequest(mPreviewRequest,
+                                            mCaptureCallback, mBackgroundHandler);
+                                }
+
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -790,7 +806,7 @@ public class MainActivity extends Activity {
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, CameraUtil.ORIENTATIONS.get(rotation));
 
-            CameraCaptureSession.CaptureCallback CaptureCallback
+            CameraCaptureSession.CaptureCallback captureCallback
                     = new CameraCaptureSession.CaptureCallback() {
 
                 @Override
@@ -802,7 +818,7 @@ public class MainActivity extends Activity {
             };
 
             mCaptureSession.stopRepeating();
-            mCaptureSession.capture(captureBuilder.build(), CaptureCallback, null);
+            mCaptureSession.capture(captureBuilder.build(), captureCallback, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -899,6 +915,14 @@ public class MainActivity extends Activity {
         closeCamera();
         openCamera(mPreview.getWidth(), mPreview.getHeight());
 //        createCameraPreviewSession(false);
+    }
+
+    private void updatePreview() {
+        try {
+            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
+        } catch (CameraAccessException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
