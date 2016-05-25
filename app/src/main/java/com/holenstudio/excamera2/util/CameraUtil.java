@@ -37,12 +37,17 @@ public class CameraUtil {
      * Conversion from screen rotation to JPEG orientation.
      */
     public static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    public static final SparseIntArray FRONT_ORIENTATIONS = new SparseIntArray();
 
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
+        FRONT_ORIENTATIONS.append(Surface.ROTATION_0, 270);
+        FRONT_ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        FRONT_ORIENTATIONS.append(Surface.ROTATION_180, 90);
+        FRONT_ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
     public static boolean prepareVideoRecorder(Activity activity, MediaRecorder recorder, Size size) {
