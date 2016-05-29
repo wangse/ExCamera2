@@ -1,6 +1,7 @@
 package com.holenstudio.excamera2;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,8 +19,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.RectF;
@@ -30,10 +34,12 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -88,7 +94,7 @@ public class MainActivity extends Activity {
     private Semaphore mCameraOpenCloseLock = new Semaphore(1);
     private boolean mIsRecordingVideo = false;
     private boolean mIsTakingPicture = true;
-    private boolean mIsFrontCamera = true;
+    private boolean mIsFrontCamera = false;
     private String mRecorderPath;
     /**
      * mPreview(预览窗口)的listener
@@ -265,6 +271,11 @@ public class MainActivity extends Activity {
                     break;
                 case R.id.iv_switch_camera:
                     switchCamera();
+                    break;
+                case R.id.iv_picture:
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
+                    startActivity(intent);
                     break;
                 default:
                     break;
@@ -790,6 +801,7 @@ public class MainActivity extends Activity {
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
                                                TotalCaptureResult result) {
                     Toast.makeText(MainActivity.this, "Saved: " + mPictureFile.getName(), Toast.LENGTH_SHORT).show();
+                    showPicture();
                     unlockFocus();
                 }
             };
@@ -799,6 +811,26 @@ public class MainActivity extends Activity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showPicture() {
+        if (!mPictureFile.exists()) {
+            return;
+        }
+        BitmapFactory.Options option = new BitmapFactory.Options();
+        option.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(mPictureFile.getAbsolutePath(),option);
+        option.inSampleSize = CameraUtil.calculateInSampleSize(option, mPictureIv.getMeasuredWidth(),
+                mPictureIv.getMeasuredHeight());
+        option.inJustDecodeBounds = false;
+        mPictureIv.setImageBitmap(BitmapFactory.decodeFile(mPictureFile.getAbsolutePath(),option));
+        try {
+            MediaStore.Images.Media.insertImage(getContentResolver(), mPictureFile.getAbsolutePath(), "ExCamera", null);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + mPictureFile.getAbsolutePath()));
+        sendBroadcast(intent);
     }
 
     /**

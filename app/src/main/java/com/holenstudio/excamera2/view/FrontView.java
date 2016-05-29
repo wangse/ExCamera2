@@ -6,38 +6,47 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.ScaleAnimation;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import com.holenstudio.excamera2.R;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FrontView extends ImageView {
 
-	private static final String TAG = "FrontView";
-	private Camera.Face[] mFaces;
-	private Context mContext;
-	private Paint mPaint;
-	private RectF paintRect = new RectF();
-	private Matrix mMatrix = new Matrix();
-	private int mDisplayOrientation = 0;
-	private Drawable mFaceDrawable = null;
+    private static final String TAG = "FrontView";
+    private Camera.Face[] mFaces;
+    private Context mContext;
+    private Paint mPaint;
+    private RectF paintRect = new RectF();
+    private Matrix mMatrix = new Matrix();
+    private int mDisplayOrientation = 0;
+    private Drawable mFaceDrawable = null;
 
-	public FrontView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		mContext = context;
-		initPaint();
-		mFaceDrawable = getResources().getDrawable(R.drawable.ic_face_find_2);
-	}
+    public FrontView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        mContext = context;
+        initPaint();
+        mFaceDrawable = getResources().getDrawable(R.drawable.ic_face_find_2);
+    }
 
-	@Override
-	protected void onDraw(Canvas canvas) {
-		// canvas.drawPaint(mPaint);
-		if (mFaces == null || mFaces.length < 1) {
-			return;
-		}
+    @Override
+    protected void onDraw(Canvas canvas) {
+        // canvas.drawPaint(mPaint);
+        if (mFaces == null || mFaces.length < 1) {
+            return;
+        }
 //		boolean isMirror = false;
 //		if (CameraOperation.getCameraInfo().facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
 //			isMirror = true;
@@ -54,30 +63,30 @@ public class FrontView extends ImageView {
 //			mFaceDrawable.draw(canvas);
 //		}
 //		canvas.restore();
-		super.onDraw(canvas);
-	}
+        super.onDraw(canvas);
+    }
 
-	private void initPaint() {
-		mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-		int color = Color.rgb(98, 212, 68);
-		mPaint.setColor(color);
-		mPaint.setStyle(Style.STROKE);
-		mPaint.setStrokeWidth(20f);
-		mPaint.setAlpha(180);
-	}
+    private void initPaint() {
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        int color = Color.rgb(98, 212, 68);
+        mPaint.setColor(color);
+        mPaint.setStyle(Style.STROKE);
+        mPaint.setStrokeWidth(20f);
+        mPaint.setAlpha(180);
+    }
 
-	public void setDisplayOrientation(int displayOrientation) {
-		mDisplayOrientation = displayOrientation;
-		invalidate();
-	}
+    public void setDisplayOrientation(int displayOrientation) {
+        mDisplayOrientation = displayOrientation;
+        invalidate();
+    }
 
-	public void setFaces(Camera.Face[] faces) {
-		mFaces = faces;
-		invalidate();
-	}
+    public void setFaces(Camera.Face[] faces) {
+        mFaces = faces;
+        invalidate();
+    }
 
-	public void clearFaces() {
-		mFaces = null;
-		invalidate();
-	}
+    public void clearFaces() {
+        mFaces = null;
+        invalidate();
+    }
 }

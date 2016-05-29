@@ -1,8 +1,8 @@
 package com.holenstudio.excamera2.util;
 
 import android.app.Activity;
+import android.graphics.BitmapFactory;
 import android.media.MediaRecorder;
-import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
@@ -70,5 +70,19 @@ public class CameraUtil {
             return false;
         }
         return true;
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options opt, int width, int height) {
+        int inSampleSize = 1;
+        int optWidth = opt.outWidth;
+        int optHeight = opt.outHeight;
+        optWidth /= 2;
+        optHeight /= 2;
+        while (optWidth > width || optHeight > height) {
+            optWidth /= 2;
+            optHeight /= 2;
+            inSampleSize *= 2;
+        }
+        return inSampleSize;
     }
 }
