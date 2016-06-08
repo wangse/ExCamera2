@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.*;
@@ -298,7 +299,25 @@ public class MainActivity extends Activity {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+            if (seekBar.getId() == R.id.camera_zoom_seek_bar) {
+                Rect rect2 = mCameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+                int radio2 = mCameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM).intValue() / 3;
+                int realRadio2 = mCameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM).intValue();
+                int centerX2 = rect2.centerX();
+                int centerY2 = rect2.centerY();
+                int minMidth2 = (rect2.right - ((progress * centerX2) / 100 / radio2) - 1) - 20;
+                int minHeight2 = (rect2.bottom - ((progress * centerY2) / 100 / radio2) - 1) - 20;
+                if (minMidth2 < rect2.right / realRadio2 || minHeight2 < rect2.bottom / realRadio2) {
+                    Log.i("sb_zoom", "sb_zoomsb_zoomsb_zoom");
+                    return;
+                }
+                Rect newRect2 = new Rect(20, 20, rect2.right - ((progress * centerX2) / 100 / radio2) - 1, rect2.bottom - ((progress * centerY2) / 100 / radio2) - 1);
+                Log.i("sb_zoom", "left--->" + "20" + ",,,top--->" + "20" + ",,,right--->" + (rect2.right - ((progress * centerX2) / 100 / radio2) - 1) + ",,,bottom--->" + (rect2.bottom - ((progress * centerY2) / 100 / radio2) - 1));
+                mPreviewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect2);
+                mCaptureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, newRect2);
+                mCameraZoomValue.setText(String.valueOf(progress));
+                updatePreview();
+            }
         }
     };
 
@@ -481,6 +500,8 @@ public class MainActivity extends Activity {
                         continue;
                     }
                 }
+                mCameraId = cameraId;
+                mCameraCharacteristics = manager.getCameraCharacteristics(mCameraId);
 
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -669,7 +690,7 @@ public class MainActivity extends Activity {
                             mCaptureSession = cameraCaptureSession;
                             try {
                                 // Finally, we start displaying the camera preview.
-                                mCaptureSession.setRepeatingRequest( mRecordRequestBuilder.build(),
+                                mCaptureSession.setRepeatingRequest(mRecordRequestBuilder.build(),
                                         null, mBackgroundHandler);
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
@@ -824,11 +845,11 @@ public class MainActivity extends Activity {
                 mPictureIv.getMeasuredHeight());
         option.inJustDecodeBounds = false;
         mPictureIv.setImageBitmap(BitmapFactory.decodeFile(mPictureFile.getAbsolutePath(),option));
-        try {
-            MediaStore.Images.Media.insertImage(getContentResolver(), mPictureFile.getAbsolutePath(), "ExCamera", null);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+//        try {
+////            MediaStore.Images.Media.insertImage(getContentResolver(), mPictureFile.getAbsolutePath(), "ExCamera", null);
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
         Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + mPictureFile.getAbsolutePath()));
         sendBroadcast(intent);
     }
@@ -886,7 +907,7 @@ public class MainActivity extends Activity {
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
-        int orientation ;
+        int orientation;
         if (mIsFrontCamera) {
             orientation = CameraUtil.FRONT_ORIENTATIONS.get(rotation);
         } else {
@@ -925,6 +946,9 @@ public class MainActivity extends Activity {
 //        // Stop recording
         mMediaRecorder.stop();
         mMediaRecorder.reset();
+        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + mRecorderPath));
+        sendBroadcast(intent);
+        mPictureIv.setImageBitmap(CameraUtil.getVideoThumbnail(mRecorderPath, mPictureIv.getWidth(), mPictureIv.getHeight(), MediaStore.Images.Thumbnails.MICRO_KIND));
 //        setUpMediaRecorder();
 //        changeToRecorderPreviewSession();
 //        closeCamera();
@@ -948,7 +972,7 @@ public class MainActivity extends Activity {
 
     private void updatePreview() {
         try {
-            mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
+            mCaptureSession.setRepeatingRequest(mPreviewRequestBuilder.build(), mCaptureCallback, mBackgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -959,6 +983,7 @@ public class MainActivity extends Activity {
         mIsFrontCamera = !mIsFrontCamera;
         openCamera(mPreview.getWidth(), mPreview.getHeight());
     }
+
     /**
      * Saves a JPEG {@link Image} into the specified {@link File}.
      */
