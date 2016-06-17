@@ -274,8 +274,8 @@ public class MainActivity extends Activity {
                     switchCamera();
                     break;
                 case R.id.iv_picture:
-                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                    intent.setType("image/*");
+                    Intent intent = new Intent(MainActivity.this, PhotoActivity.class);
+                    intent.putExtra("image_path", mPictureFile.getAbsolutePath());
                     startActivity(intent);
                     break;
                 default:
@@ -335,6 +335,7 @@ public class MainActivity extends Activity {
             return false;
         }
     };
+    private static boolean mIsSavedPhoto = false;
 
     /**
      * Given {@code choices} of {@code Size}s supported by a camera, chooses the
@@ -797,8 +798,8 @@ public class MainActivity extends Activity {
                 return;
             }
             // This is the CaptureRequest.Builder that we use to take a picture.
-            Surface imageReaderSurfac = mImageReader.getSurface();
-            mCaptureRequestBuilder.addTarget(imageReaderSurfac);
+            Surface imageReaderSurface = mImageReader.getSurface();
+            mCaptureRequestBuilder.addTarget(imageReaderSurface);
             setCaptureResquestParameters();
 
             // Use the same AE and AF modes as the preview.
@@ -821,7 +822,10 @@ public class MainActivity extends Activity {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
                                                TotalCaptureResult result) {
-                    Toast.makeText(MainActivity.this, "Saved: " + mPictureFile.getName(), Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "mPictureFile:aaaaa");
+                    while (!mIsSavedPhoto) {
+
+                    }
                     showPicture();
                     unlockFocus();
                 }
@@ -835,7 +839,7 @@ public class MainActivity extends Activity {
     }
 
     private void showPicture() {
-        if (!mPictureFile.exists()) {
+        if (mPictureFile == null || !mPictureFile.exists()) {
             return;
         }
         BitmapFactory.Options option = new BitmapFactory.Options();
@@ -1010,6 +1014,7 @@ public class MainActivity extends Activity {
             buffer.get(bytes);
             FileUtil.saveFile(bytes, mFile);
             mImage.close();
+            mIsSavedPhoto = true;
         }
 
     }
