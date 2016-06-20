@@ -22,6 +22,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     private Context mContext;
     private List<ThumbnailItem> mThumbsList;
+    private ThumbnailCallback thumbnailCallback;
 
     public ThumbnailAdapter(Context context, List<ThumbnailItem> thumbsList) {
         this.mContext = context;
@@ -37,9 +38,19 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ThumbnailItem thumb = mThumbsList.get(position);
+        final int pos = position;
+        ThumbnailItem thumb = mThumbsList.get(pos);
         ((ThumbsViewHolder) holder).thumbText.setText(thumb.text);
         ((ThumbsViewHolder) holder).thumbView.setImageBitmap(thumb.image);
+        ((ThumbsViewHolder) holder).thumbView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lastPosition != pos) {
+                    thumbnailCallback.onThumbnailClick(v, pos);
+                    lastPosition = pos;
+                }
+            }
+        });
     }
 
     @Override
@@ -47,6 +58,9 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return mThumbsList == null? 0 : mThumbsList.size();
     }
 
+    public void setThumbnailCallback (ThumbnailCallback callback) {
+        thumbnailCallback = callback;
+    }
     public static class ThumbsViewHolder extends RecyclerView.ViewHolder {
         public ImageView thumbView;
         public TextView thumbText;
@@ -56,5 +70,8 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             thumbView = (ImageView) view.findViewById(R.id.thumb_image);
             thumbText = (TextView) view.findViewById(R.id.thumb_text);
         }
+    }
+    public interface ThumbnailCallback{
+        void onThumbnailClick(View view, int position);
     }
 }

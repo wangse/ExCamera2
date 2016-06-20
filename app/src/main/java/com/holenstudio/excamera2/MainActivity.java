@@ -822,10 +822,11 @@ public class MainActivity extends Activity {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
                                                TotalCaptureResult result) {
-                    Log.d(TAG, "mPictureFile:aaaaa");
+                    //这里为了等待图片保存完
                     while (!mIsSavedPhoto) {
 
                     }
+                    mIsSavedPhoto = false;
                     showPicture();
                     unlockFocus();
                 }

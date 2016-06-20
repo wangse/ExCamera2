@@ -19,7 +19,7 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/thumbnails"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/recycler_size"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="@dimen/thumbnail_vertical_padding"
         android:layout_marginTop="@dimen/thumbnail_vertical_padding"
