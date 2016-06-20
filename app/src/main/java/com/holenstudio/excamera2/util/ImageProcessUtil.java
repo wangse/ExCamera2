@@ -142,7 +142,11 @@ public class ImageProcessUtil {
         return applyCurves(rgb, r, g, b, originalBmp);
     }
 
-    public static Bitmap getStarLitBitmap(Bitmap mOriginalBmp, int width, int height) {
+    public static Bitmap getOriginalBitmap(Bitmap mOriginalBmp) {
+        return process(mOriginalBmp, null, null, null, null);
+    }
+
+    public static Bitmap getStarLitBitmap(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         rgbKnots = new Point[8];
         rgbKnots[0] = new Point(0, 0);
@@ -156,7 +160,7 @@ public class ImageProcessUtil {
         return process(mOriginalBmp, rgbKnots, null, null, null);
     }
 
-    public static Bitmap getBlueMessBitmap(Bitmap mOriginalBmp, int width, int height) {
+    public static Bitmap getBlueMessBitmap(Bitmap mOriginalBmp) {
         BezierSpline.Point[] redKnots;
         redKnots = new BezierSpline.Point[8];
         redKnots[0] = new BezierSpline.Point(0, 0);
@@ -170,7 +174,7 @@ public class ImageProcessUtil {
         return process(mOriginalBmp, null, redKnots, null, null);
     }
 
-    public static Bitmap getAweStruckVibeBitmap(Bitmap mOriginalBmp, int width, int height) {
+    public static Bitmap getAweStruckVibeBitmap(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         Point[] redKnots;
         Point[] greenKnots;
@@ -211,7 +215,7 @@ public class ImageProcessUtil {
         return process(mOriginalBmp, rgbKnots, redKnots, greenKnots, blueKnots);
     }
 
-    public static Bitmap getLimeStutterBitmap(Bitmap mOriginalBmp, int width, int height) {
+    public static Bitmap getLimeStutterBitmap(Bitmap mOriginalBmp) {
         Point[] blueKnots;
         blueKnots = new Point[3];
         blueKnots[0] = new Point(0, 0);
@@ -220,7 +224,7 @@ public class ImageProcessUtil {
         return process(mOriginalBmp, null, null, null, blueKnots);
     }
 
-    public static Bitmap getNightWhisperBitmap(Bitmap mOriginalBmp, int width, int height) {
+    public static Bitmap getNightWhisperBitmap(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         Point[] redKnots;
         Point[] greenKnots;

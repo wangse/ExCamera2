@@ -27,28 +27,24 @@ public class PhotoActivity extends Activity {
     private RecyclerView mThumbsView;
     private String imagePath;
     private Bitmap mOriginalBmp;
-    private Bitmap mThumbBmp;
     BitmapFactory.Options mOptions;
     private ThumbnailAdapter.ThumbnailCallback mThumbnailCallback = new ThumbnailAdapter.ThumbnailCallback() {
         @Override
         public void onThumbnailClick(View view, int position) {
-            int width = mImageView.getWidth();
-            int height = mImageView.getHeight();
-            Bitmap imageBmp = null;
             if (position == 0) {
-                imageBmp = mOriginalBmp;
+                mOriginalBmp = ImageProcessUtil.getOriginalBitmap(mOriginalBmp);
             } else if (position == 1) {
-                imageBmp = ImageProcessUtil.getStarLitBitmap(mOriginalBmp, width, height);
+                mOriginalBmp = ImageProcessUtil.getStarLitBitmap(mOriginalBmp);
             } else if (position == 2) {
-                imageBmp = ImageProcessUtil.getBlueMessBitmap(mOriginalBmp, width, height);
+                mOriginalBmp = ImageProcessUtil.getBlueMessBitmap(mOriginalBmp);
             } else if (position == 3) {
-                imageBmp = ImageProcessUtil.getAweStruckVibeBitmap(mOriginalBmp, width, height);
+                mOriginalBmp = ImageProcessUtil.getAweStruckVibeBitmap(mOriginalBmp);
             } else if (position == 4) {
-                imageBmp = ImageProcessUtil.getLimeStutterBitmap(mOriginalBmp, width, height);
+                mOriginalBmp = ImageProcessUtil.getLimeStutterBitmap(mOriginalBmp);
             } else if (position == 5) {
-                imageBmp = ImageProcessUtil.getNightWhisperBitmap(mOriginalBmp, width, height);
+                mOriginalBmp = ImageProcessUtil.getNightWhisperBitmap(mOriginalBmp);
             }
-            mImageView.setImageBitmap(imageBmp);
+            mImageView.setImageBitmap(mOriginalBmp);
         }
     };
 
@@ -121,19 +117,19 @@ public class PhotoActivity extends Activity {
                 t1.image = thumbImage;
                 t1.text = "Original";
                 thumbs.add(t1);
-                t2.image = ImageProcessUtil.getStarLitBitmap(thumbImage, 200, 200);
+                t2.image = ImageProcessUtil.getStarLitBitmap(thumbImage);
                 t2.text = "StarLit";
                 thumbs.add(t2);
-                t3.image = ImageProcessUtil.getBlueMessBitmap(thumbImage, 200, 200);
+                t3.image = ImageProcessUtil.getBlueMessBitmap(thumbImage);
                 t3.text = "BlueMess";
                 thumbs.add(t3);
-                t4.image = ImageProcessUtil.getAweStruckVibeBitmap(thumbImage, 200, 200);
+                t4.image = ImageProcessUtil.getAweStruckVibeBitmap(thumbImage);
                 t4.text = "AweStruck";
                 thumbs.add(t4);
-                t5.image = ImageProcessUtil.getLimeStutterBitmap(thumbImage, 200, 200);
+                t5.image = ImageProcessUtil.getLimeStutterBitmap(thumbImage);
                 t5.text = "LimeStutter";
                 thumbs.add(t5);
-                t6.image = ImageProcessUtil.getNightWhisperBitmap(thumbImage, 200, 200);
+                t6.image = ImageProcessUtil.getNightWhisperBitmap(thumbImage);
                 t6.text = "NightWhisper";
                 thumbs.add(t6);
 
