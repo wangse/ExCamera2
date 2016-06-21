@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
@@ -42,13 +43,18 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.util.Pair;
+import android.support.v4.view.ViewCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -60,7 +66,7 @@ import com.holenstudio.excamera2.util.FileUtil;
 import com.holenstudio.excamera2.view.ExCamera2View;
 import com.holenstudio.excamera2.view.FrontView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private final int REQUEST_CODE_CAMERA_PERMISSION = 0x01;
@@ -276,7 +282,7 @@ public class MainActivity extends Activity {
                 case R.id.iv_picture:
                     Intent intent = new Intent(MainActivity.this, PhotoActivity.class);
                     intent.putExtra("image_path", mPictureFile.getAbsolutePath());
-                    startActivity(intent);
+                    ActivityCompat.startActivity(MainActivity.this, intent, ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, mPictureIv, "photo").toBundle());
                     break;
                 default:
                     break;

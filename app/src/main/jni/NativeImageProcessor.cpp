@@ -350,7 +350,7 @@ Java_com_holenstudio_excamera2_util_ImageProcessUtil_applyChannelCurves(JNIEnv *
 }
 
 JNIEXPORT jintArray
-Java_com_holenstudio_excamera2_util_ImageProcessUtilr_doBrightness(JNIEnv *env, jobject thiz,
+Java_com_holenstudio_excamera2_util_ImageProcessUtil_doBrightness(JNIEnv *env, jobject thiz,
                                                                                jintArray pixels, jint value, jint width,
                                                                                jint height) {
     jint *pixelsBuff = getPointerArray(env, pixels);

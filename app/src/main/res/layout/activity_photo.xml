@@ -13,6 +13,7 @@
         android:id="@+id/imageView"
         android:layout_width="400dp"
         android:layout_height="400dp"
+        android:transitionName="photo"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"/>
 

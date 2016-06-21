@@ -1,11 +1,11 @@
 package com.holenstudio.excamera2.util;
 
 import android.graphics.Bitmap;
-import android.graphics.Path;
-import android.graphics.PathMeasure;
-import android.os.Build;
-import android.view.animation.PathInterpolator;
 
+import com.holenstudio.excamera2.filter.BrightnessSubfilter;
+import com.holenstudio.excamera2.filter.ContrastSubfilter;
+import com.holenstudio.excamera2.filter.Filter;
+import com.holenstudio.excamera2.filter.ToneCurveSubfilter;
 import com.holenstudio.excamera2.util.BezierSpline.Point;
 
 /**
@@ -146,7 +146,7 @@ public class ImageProcessUtil {
         return process(mOriginalBmp, null, null, null, null);
     }
 
-    public static Bitmap getStarLitBitmap(Bitmap mOriginalBmp) {
+    public static Filter getStarLitFilter(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         rgbKnots = new Point[8];
         rgbKnots[0] = new Point(0, 0);
@@ -157,10 +157,12 @@ public class ImageProcessUtil {
         rgbKnots[5] = new Point(176, 196);
         rgbKnots[6] = new Point(207, 233);
         rgbKnots[7] = new Point(255, 255);
-        return process(mOriginalBmp, rgbKnots, null, null, null);
+        Filter filter = new Filter();
+        filter.addSubFilter(new ToneCurveSubfilter(rgbKnots, null, null, null));
+        return filter;
     }
 
-    public static Bitmap getBlueMessBitmap(Bitmap mOriginalBmp) {
+    public static Filter getBlueMessFilter(Bitmap mOriginalBmp) {
         BezierSpline.Point[] redKnots;
         redKnots = new BezierSpline.Point[8];
         redKnots[0] = new BezierSpline.Point(0, 0);
@@ -171,10 +173,14 @@ public class ImageProcessUtil {
         redKnots[5] = new Point(200, 214);
         redKnots[6] = new Point(225, 242);
         redKnots[7] = new Point(255, 255);
-        return process(mOriginalBmp, null, redKnots, null, null);
+        Filter filter = new Filter();
+        filter.addSubFilter(new ToneCurveSubfilter(null, redKnots, null, null));
+        filter.addSubFilter(new BrightnessSubfilter(30));
+        filter.addSubFilter(new ContrastSubfilter(1f));
+        return filter;
     }
 
-    public static Bitmap getAweStruckVibeBitmap(Bitmap mOriginalBmp) {
+    public static Filter getAweStruckVibeFilter(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         Point[] redKnots;
         Point[] greenKnots;
@@ -212,19 +218,24 @@ public class ImageProcessUtil {
         blueKnots[4] = new Point(171, 204);
         blueKnots[5] = new Point(212, 233);
         blueKnots[6] = new Point(255, 255);
-        return process(mOriginalBmp, rgbKnots, redKnots, greenKnots, blueKnots);
+
+        Filter filter = new Filter();
+        filter.addSubFilter(new ToneCurveSubfilter(rgbKnots, redKnots, greenKnots, blueKnots));
+        return filter;
     }
 
-    public static Bitmap getLimeStutterBitmap(Bitmap mOriginalBmp) {
+    public static Filter getLimeStutterFilter(Bitmap mOriginalBmp) {
         Point[] blueKnots;
         blueKnots = new Point[3];
         blueKnots[0] = new Point(0, 0);
         blueKnots[1] = new Point(165, 114);
         blueKnots[2] = new Point(255, 255);
-        return process(mOriginalBmp, null, null, null, blueKnots);
+        Filter filter = new Filter();
+        filter.addSubFilter(new ToneCurveSubfilter(null, null, null, blueKnots));
+        return filter;
     }
 
-    public static Bitmap getNightWhisperBitmap(Bitmap mOriginalBmp) {
+    public static Filter getNightWhisperFilter(Bitmap mOriginalBmp) {
         Point[] rgbKnots;
         Point[] redKnots;
         Point[] greenKnots;
@@ -250,7 +261,9 @@ public class ImageProcessUtil {
         blueKnots[0] = new Point(0, 0);
         blueKnots[1] = new Point(113, 152);
         blueKnots[2] = new Point(255, 255);
-        return process(mOriginalBmp, rgbKnots, redKnots, greenKnots, blueKnots);
+        Filter filter = new Filter();
+        filter.addSubFilter(new ToneCurveSubfilter(rgbKnots, redKnots, greenKnots, blueKnots));
+        return filter;
     }
 
     public static Point[] sortPointsOnXAxis(Point[] points) {

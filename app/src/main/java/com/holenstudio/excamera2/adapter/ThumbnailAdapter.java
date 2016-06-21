@@ -2,6 +2,7 @@ package com.holenstudio.excamera2.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.holenstudio.excamera2.R;
+import com.holenstudio.excamera2.filter.Filter;
 import com.holenstudio.excamera2.model.ThumbnailItem;
 
 import java.util.List;
@@ -37,17 +39,17 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        final int pos = position;
-        ThumbnailItem thumb = mThumbsList.get(pos);
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
+        final ThumbnailItem thumb = mThumbsList.get(position);
         ((ThumbsViewHolder) holder).thumbText.setText(thumb.text);
         ((ThumbsViewHolder) holder).thumbView.setImageBitmap(thumb.image);
+        ((ThumbsViewHolder) holder).thumbView.setScaleType(ImageView.ScaleType.FIT_START);
         ((ThumbsViewHolder) holder).thumbView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (lastPosition != pos) {
-                    thumbnailCallback.onThumbnailClick(v, pos);
-                    lastPosition = pos;
+                if (lastPosition != position && thumbnailCallback != null) {
+                    thumbnailCallback.onThumbnailClick(v, thumb.filter);
+                    lastPosition = position;
                 }
             }
         });
@@ -72,6 +74,6 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
     public interface ThumbnailCallback{
-        void onThumbnailClick(View view, int position);
+        void onThumbnailClick(View view, Filter filter);
     }
 }

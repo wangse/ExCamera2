@@ -1,27 +1,29 @@
 package com.holenstudio.excamera2;
 
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageView;
 
 import com.holenstudio.excamera2.adapter.ThumbnailAdapter;
+import com.holenstudio.excamera2.filter.Filter;
 import com.holenstudio.excamera2.model.ThumbnailItem;
 import com.holenstudio.excamera2.util.CameraUtil;
-import com.holenstudio.excamera2.util.FileUtil;
 import com.holenstudio.excamera2.util.ImageProcessUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PhotoActivity extends Activity {
+public class PhotoActivity extends AppCompatActivity {
+    private final static String TAG = "PhotoActivity";
 
     private ImageView mImageView;
     private RecyclerView mThumbsView;
@@ -30,21 +32,8 @@ public class PhotoActivity extends Activity {
     BitmapFactory.Options mOptions;
     private ThumbnailAdapter.ThumbnailCallback mThumbnailCallback = new ThumbnailAdapter.ThumbnailCallback() {
         @Override
-        public void onThumbnailClick(View view, int position) {
-            if (position == 0) {
-                mOriginalBmp = ImageProcessUtil.getOriginalBitmap(mOriginalBmp);
-            } else if (position == 1) {
-                mOriginalBmp = ImageProcessUtil.getStarLitBitmap(mOriginalBmp);
-            } else if (position == 2) {
-                mOriginalBmp = ImageProcessUtil.getBlueMessBitmap(mOriginalBmp);
-            } else if (position == 3) {
-                mOriginalBmp = ImageProcessUtil.getAweStruckVibeBitmap(mOriginalBmp);
-            } else if (position == 4) {
-                mOriginalBmp = ImageProcessUtil.getLimeStutterBitmap(mOriginalBmp);
-            } else if (position == 5) {
-                mOriginalBmp = ImageProcessUtil.getNightWhisperBitmap(mOriginalBmp);
-            }
-            mImageView.setImageBitmap(mOriginalBmp);
+        public void onThumbnailClick(View view, Filter filter) {
+            mImageView.setImageBitmap(filter.processFilter(Bitmap.createScaledBitmap(BitmapFactory.decodeFile(imagePath, mOptions), 640, 640, false)));
         }
     };
 
@@ -82,7 +71,7 @@ public class PhotoActivity extends Activity {
         mOptions.inSampleSize = CameraUtil.calculateInSampleSize(mOptions, 300,
                 300);
         mOptions.inJustDecodeBounds = false;
-        mOriginalBmp = BitmapFactory.decodeFile(imagePath, mOptions);
+        mOriginalBmp = Bitmap.createScaledBitmap(BitmapFactory.decodeFile(imagePath, mOptions), 640, 640, false);
         mImageView.setImageBitmap(mOriginalBmp);
     }
 
@@ -99,13 +88,13 @@ public class PhotoActivity extends Activity {
         Handler handler = new Handler();
         Runnable r = new Runnable() {
             public void run() {
-                BitmapFactory.Options tmpOption = new BitmapFactory.Options();
-                tmpOption.inJustDecodeBounds = true;
-                BitmapFactory.decodeFile(imagePath, tmpOption);
-                mOptions.inSampleSize = CameraUtil.calculateInSampleSize(mOptions, 200,
-                        200);
-                tmpOption.inJustDecodeBounds = false;
-                Bitmap thumbImage = BitmapFactory.decodeFile(imagePath, tmpOption);
+//                BitmapFactory.Options tmpOption = new BitmapFactory.Options();
+//                tmpOption.inJustDecodeBounds = true;
+//                BitmapFactory.decodeFile(imagePath, tmpOption);
+//                mOptions.inSampleSize = CameraUtil.calculateInSampleSize(mOptions, 100,
+//                        100);
+//                tmpOption.inJustDecodeBounds = false;
+                Bitmap thumbImage = Bitmap.createScaledBitmap(mOriginalBmp, 150, 150, false);
                 List<ThumbnailItem> thumbs = new ArrayList<>();
                 ThumbnailItem t1 = new ThumbnailItem();
                 ThumbnailItem t2 = new ThumbnailItem();
@@ -115,21 +104,27 @@ public class PhotoActivity extends Activity {
                 ThumbnailItem t6 = new ThumbnailItem();
 
                 t1.image = thumbImage;
+                t2.image = thumbImage;
+                t3.image = thumbImage;
+                t4.image = thumbImage;
+                t5.image = thumbImage;
+                t6.image = thumbImage;
+
                 t1.text = "Original";
                 thumbs.add(t1);
-                t2.image = ImageProcessUtil.getStarLitBitmap(thumbImage);
+                t2.filter = ImageProcessUtil.getStarLitFilter(thumbImage);
                 t2.text = "StarLit";
                 thumbs.add(t2);
-                t3.image = ImageProcessUtil.getBlueMessBitmap(thumbImage);
+                t3.filter = ImageProcessUtil.getBlueMessFilter(thumbImage);
                 t3.text = "BlueMess";
                 thumbs.add(t3);
-                t4.image = ImageProcessUtil.getAweStruckVibeBitmap(thumbImage);
+                t4.filter = ImageProcessUtil.getAweStruckVibeFilter(thumbImage);
                 t4.text = "AweStruck";
                 thumbs.add(t4);
-                t5.image = ImageProcessUtil.getLimeStutterBitmap(thumbImage);
+                t5.filter = ImageProcessUtil.getLimeStutterFilter(thumbImage);
                 t5.text = "LimeStutter";
                 thumbs.add(t5);
-                t6.image = ImageProcessUtil.getNightWhisperBitmap(thumbImage);
+                t6.filter = ImageProcessUtil.getNightWhisperFilter(thumbImage);
                 t6.text = "NightWhisper";
                 thumbs.add(t6);
 
